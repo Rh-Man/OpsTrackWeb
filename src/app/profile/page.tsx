@@ -83,7 +83,7 @@ export default function ProfilePage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold">
-                        {user?.givenName ? `${user.givenName} ${user.familyName || ''}`.trim() : 'Utilisateur'}
+                        {user?.username || user?.givenName ? `${user.givenName || ''} ${user.familyName || ''}`.trim() : 'Utilisateur'}
                       </p>
                       <p className="text-sm text-muted-foreground">Membre actif</p>
                     </div>
@@ -131,13 +131,13 @@ export default function ProfilePage() {
                   </div>
                   <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200">
                     <p className="text-3xl font-bold text-blue-600">
-                      {tickets.filter(t => t.status === 'in_progress').length}
+                      {tickets.filter(t => t.status === 'IN_PROGRESS').length}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">En cours</p>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-100 to-green-50 border border-green-200">
                     <p className="text-3xl font-bold text-green-600">
-                      {tickets.filter(t => t.status === 'resolved').length}
+                      {tickets.filter(t => t.status === 'RESOLVED').length}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">Résolus</p>
                   </div>

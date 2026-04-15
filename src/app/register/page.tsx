@@ -137,7 +137,7 @@ export default function RegisterPage() {
                   className="h-11"
                 />
                 <p className="text-xs text-muted-foreground bg-cyan-50 p-2 rounded">
-                  Min. 8 caractères avec majuscule, minuscule et chiffre
+                  Min. 8 caractères avec majuscule, minuscule, chiffre et caractère spécial (!@#$...)
                 </p>
               </div>
             </CardContent>

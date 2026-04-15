@@ -10,15 +10,15 @@ import { CommentList } from '@/components/tickets/comment-list'
 import { CommentForm } from '@/components/tickets/comment-form'
 import { FileUpload } from '@/components/tickets/file-upload'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { Ticket } from '@/types'
+import type { Ticket, Comment } from '@/types'
 import { AlertCircle, Paperclip, Upload } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  resolved: 'bg-green-100 text-green-800',
-  closed: 'bg-gray-100 text-gray-800',
+  OPEN: 'bg-yellow-100 text-yellow-800',
+  IN_PROGRESS: 'bg-blue-100 text-blue-800',
+  RESOLVED: 'bg-green-100 text-green-800',
+  CLOSED: 'bg-gray-100 text-gray-800',
 }
 
 const priorityColors: Record<string, string> = {
@@ -30,9 +30,10 @@ const priorityColors: Record<string, string> = {
 
 export default function TicketDetailPage() {
   const params = useParams()
-  const ticketId = decodeURIComponent(params.id as string)
+  const ticketId = params.id as string
 
   const [ticket, setTicket] = useState<Ticket | null>(null)
+  const [comments, setComments] = useState<Comment[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -44,8 +45,14 @@ export default function TicketDetailPage() {
   const loadTicket = async () => {
     setIsLoading(true)
     try {
-      const data = await ticketsApi.getTicket(ticketId)
-      setTicket(data)
+      // Charger ticket, commentaires et pièces jointes en parallèle
+      const [ticketData, commentsData, attachmentsData] = await Promise.all([
+        ticketsApi.getTicket(ticketId),
+        ticketsApi.getComments(ticketId).catch(() => []),
+        ticketsApi.getAttachments(ticketId).catch(() => []),
+      ])
+      setTicket({ ...ticketData, attachments: attachmentsData })
+      setComments(commentsData)
     } catch (err: any) {
       setError(err.message || 'Erreur lors du chargement du ticket')
     } finally {
@@ -53,9 +60,11 @@ export default function TicketDetailPage() {
     }
   }
 
+  // Nouveau backend utilise "content" au lieu de "text"
   const handleAddComment = async (text: string) => {
-    await ticketsApi.addComment(ticketId, { text })
-    await loadTicket()
+    await ticketsApi.addComment(ticketId, { content: text })
+    const updatedComments = await ticketsApi.getComments(ticketId).catch(() => [])
+    setComments(updatedComments)
   }
 
   const handleUploadComplete = async () => {
@@ -101,7 +110,7 @@ export default function TicketDetailPage() {
                 </Badge>
               </div>
               <p className="text-sm text-muted-foreground font-mono bg-white px-3 py-1 rounded-full">
-                #{ticket.ticketId.slice(0, 8)}
+                #{ticket.id.slice(0, 8)}
               </p>
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{ticket.title}</h1>
@@ -143,20 +152,13 @@ export default function TicketDetailPage() {
                       rel="noopener noreferrer"
                       className="flex items-center p-4 border-2 rounded-xl hover:border-cyan-300 hover:bg-cyan-50 transition-all group"
                     >
-                      <div className="h-12 w-12 rounded-lg bg-cyan-100 flex items-center justify-center mr-3 group-hover:bg-cyan-200 transition-colors">
+                      <div className="h-12 w-12 rounded-lg bg-cyan-100 flex items-center justify-center mr-3">
                         <Paperclip className="h-6 w-6 text-cyan-600" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate group-hover:text-cyan-600">
-                          {attachment.fileName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatDate(attachment.uploadedAt)}
-                        </p>
+                        <p className="text-sm font-medium truncate">{attachment.fileName}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(attachment.uploadedAt)}</p>
                       </div>
-                      <svg className="h-5 w-5 text-gray-400 group-hover:text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
                     </a>
                   ))}
                 </div>
@@ -179,15 +181,13 @@ export default function TicketDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
             Commentaires
-            {ticket.comments && ticket.comments.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({ticket.comments.length})
-              </span>
+            {comments.length > 0 && (
+              <span className="ml-2 text-sm font-normal text-muted-foreground">({comments.length})</span>
             )}
           </h2>
           <div className="space-y-4">
             <CommentForm onSubmit={handleAddComment} />
-            <CommentList comments={ticket.comments || []} />
+            <CommentList comments={comments} />
           </div>
         </div>
       </div>

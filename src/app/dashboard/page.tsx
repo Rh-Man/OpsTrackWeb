@@ -13,10 +13,11 @@ import { Plus, AlertCircle, Ticket as TicketIcon } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  resolved: 'bg-green-100 text-green-800',
-  closed: 'bg-gray-100 text-gray-800',
+  // Nouveau backend (majuscules)
+  OPEN: 'bg-yellow-100 text-yellow-800',
+  IN_PROGRESS: 'bg-blue-100 text-blue-800',
+  RESOLVED: 'bg-green-100 text-green-800',
+  CLOSED: 'bg-gray-100 text-gray-800',
 }
 
 const priorityColors: Record<string, string> = {
@@ -73,15 +74,15 @@ export default function DashboardPage() {
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">En attente</p>
-                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'pending').length}</p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'OPEN').length}</p>
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">En cours</p>
-                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'in_progress').length}</p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'IN_PROGRESS').length}</p>
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">Résolus</p>
-                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'resolved').length}</p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'RESOLVED').length}</p>
               </div>
             </div>
           </div>
@@ -121,7 +122,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {tickets.map((ticket) => (
-              <Link key={ticket.ticketId} href={`/tickets/${encodeURIComponent(ticket.ticketId)}`}>
+              <Link key={ticket.id} href={`/tickets/${ticket.id}`}>
                 <Card className="group hover:shadow-xl transition-all cursor-pointer h-full bg-white border-2 hover:border-cyan-200 hover-lift">
                   <CardHeader className="space-y-3 pb-3">
                     <div className="flex justify-between items-start gap-2">

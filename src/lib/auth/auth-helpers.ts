@@ -20,14 +20,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 export const authHelpers = {
   signUp: async ({ email, password, givenName, familyName }: SignUpParams) => {
     try {
+      // Nouveau backend utilise "username" au lieu de "givenName/familyName"
+      const username = familyName ? `${givenName} ${familyName}` : givenName
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, givenName, familyName }),
+        body: JSON.stringify({ email, password, username }),
       })
       const data = await response.json()
-      if (!response.ok) return { success: false, error: data.message || 'Inscription échouée' }
-      return { success: true, userId: data.userId }
+      if (!response.ok) return { success: false, error: data.error || data.message || 'Inscription échouée' }
+      return { success: true }
     } catch (error: any) {
       return { success: false, error: error.message || 'Erreur réseau' }
     }
@@ -41,7 +43,7 @@ export const authHelpers = {
         body: JSON.stringify({ email, code }),
       })
       const data = await response.json()
-      if (!response.ok) return { success: false, error: data.message || 'Confirmation échouée' }
+      if (!response.ok) return { success: false, error: data.error || data.message || 'Confirmation échouée' }
       return { success: true }
     } catch (error: any) {
       return { success: false, error: error.message || 'Erreur réseau' }
@@ -56,7 +58,7 @@ export const authHelpers = {
         body: JSON.stringify({ email, password }),
       })
       const data = await response.json()
-      if (!response.ok) return { success: false, error: data.message || 'Connexion échouée' }
+      if (!response.ok) return { success: false, error: data.error || data.message || 'Connexion échouée' }
       if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
       if (data.idToken) localStorage.setItem('idToken', data.idToken)
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
@@ -91,6 +93,7 @@ export const authHelpers = {
     }
   },
 
+  // IMPORTANT: API Gateway Cognito Authorizer accepte uniquement l'idToken
   getAccessToken: () => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('idToken')

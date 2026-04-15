@@ -29,8 +29,9 @@ export default function NewTicketPage() {
     setIsLoading(true)
 
     try {
-      const ticket = await ticketsApi.createTicket({ title, description })
-      router.push(`/tickets/${encodeURIComponent(ticket.ticketId)}`)
+      const ticket = await ticketsApi.createTicket({ title, description, priority })
+      // Nouveau backend utilise "id" au lieu de "ticketId"
+      router.push(`/tickets/${ticket.id}`)
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la création du ticket')
       setIsLoading(false)

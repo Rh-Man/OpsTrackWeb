@@ -45,7 +45,7 @@ export function CommentList({ comments }: CommentListProps) {
                   </p>
                 </div>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-3 rounded-lg">
-                  {comment.text}
+                  {comment.content}
                 </p>
               </div>
             </div>

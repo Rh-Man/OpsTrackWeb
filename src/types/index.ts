@@ -1,12 +1,14 @@
 export interface User {
   userId: string
   email: string
+  username?: string
   givenName?: string
   familyName?: string
   emailVerified?: boolean
 }
 
-export type TicketStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
+// Nouveau backend : statuts en MAJUSCULES
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
 
 export enum TicketPriority {
   LOW = 'LOW',
@@ -16,7 +18,7 @@ export enum TicketPriority {
 }
 
 export interface Ticket {
-  ticketId: string
+  id: string        // nouveau backend utilise "id"
   userId: string
   title: string
   description: string
@@ -32,17 +34,17 @@ export interface Comment {
   commentId: string
   ticketId?: string
   userId: string
-  text: string
+  content: string   // nouveau backend utilise "content"
   createdAt: string
 }
 
 export interface Attachment {
   attachmentId: string
-  ticketId: string
+  ticketId?: string
   fileName: string
-  fileSize: number
-  fileType: string
-  s3Key: string
+  fileSize?: number
+  fileType?: string
+  s3Key?: string
   uploadedAt: string
   url?: string
 }
@@ -50,14 +52,15 @@ export interface Attachment {
 export interface CreateTicketInput {
   title: string
   description: string
+  priority?: TicketPriority
 }
 
 export interface CreateCommentInput {
-  text: string
+  content: string   // nouveau backend utilise "content"
 }
 
 export interface PresignedUrlResponse {
   uploadUrl: string
-  key: string
+  attachmentId: string
   expiresIn: number
 }
