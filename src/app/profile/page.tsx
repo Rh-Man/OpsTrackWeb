@@ -6,24 +6,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/auth-context'
 import { userApi } from '@/lib/api/user'
-import type { User } from '@/types'
+import { ticketsApi } from '@/lib/api/tickets'
+import type { User, Ticket } from '@/types'
 import { User as UserIcon, Mail, AlertCircle } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user: authUser } = useAuth()
   const [user, setUser] = useState<User | null>(null)
+  const [tickets, setTickets] = useState<Ticket[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    loadUser()
+    loadData()
   }, [])
 
-  const loadUser = async () => {
+  const loadData = async () => {
     setIsLoading(true)
     try {
-      const data = await userApi.getMe()
-      setUser(data)
+      const [userData, ticketsData] = await Promise.all([
+        userApi.getMe(),
+        ticketsApi.getTickets(),
+      ])
+      setUser(userData)
+      setTickets(ticketsData)
     } catch (err: any) {
       setError(err.message || 'Erreur lors du chargement du profil')
     } finally {
@@ -120,15 +126,19 @@ export default function ProfilePage() {
               <CardContent className="pt-6">
                 <div className="space-y-4">
                   <div className="text-center p-4 rounded-xl bg-gradient-to-br from-cyan-100 to-cyan-50 border border-cyan-200">
-                    <p className="text-3xl font-bold text-cyan-600">3</p>
+                    <p className="text-3xl font-bold text-cyan-600">{tickets.length}</p>
                     <p className="text-sm text-gray-600 mt-1">Tickets créés</p>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 border border-blue-200">
-                    <p className="text-3xl font-bold text-blue-600">1</p>
+                    <p className="text-3xl font-bold text-blue-600">
+                      {tickets.filter(t => t.status === 'in_progress').length}
+                    </p>
                     <p className="text-sm text-gray-600 mt-1">En cours</p>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-100 to-green-50 border border-green-200">
-                    <p className="text-3xl font-bold text-green-600">1</p>
+                    <p className="text-3xl font-bold text-green-600">
+                      {tickets.filter(t => t.status === 'resolved').length}
+                    </p>
                     <p className="text-sm text-gray-600 mt-1">Résolus</p>
                   </div>
                 </div>
