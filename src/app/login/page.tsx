@@ -18,8 +18,6 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  // MODE DÉVELOPPEMENT : Redirection désactivée
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -38,7 +36,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-sky-50 px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-block gradient-primary p-3 rounded-2xl mb-4 shadow-glow">
             <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -48,7 +45,7 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-sky-600 bg-clip-text text-transparent">
             OpsTrack
           </h1>
-          <p className="text-muted-foreground mt-2">Gestion d'incidents simplifiée</p>
+          <p className="text-muted-foreground mt-2">Gestion d&apos;incidents simplifiée</p>
         </div>
 
         <Card className="border-2 shadow-2xl">
@@ -91,9 +88,9 @@ export default function LoginPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-2">
-              <Button 
-                type="submit" 
-                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all" 
+              <Button
+                type="submit"
+                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? 'Connexion en cours...' : 'Se connecter'}

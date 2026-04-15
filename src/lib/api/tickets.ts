@@ -1,47 +1,40 @@
 import { apiClient } from './client'
-import type { Ticket, CreateTicketInput, Comment, CreateCommentInput, PresignedUrlResponse } from '@/types'
+import type { Ticket, Comment, CreateTicketInput, CreateCommentInput, PresignedUrlResponse, Attachment } from '@/types'
 
 export const ticketsApi = {
-  // Get all tickets for current user
   getTickets: async (): Promise<Ticket[]> => {
-    return apiClient.get<Ticket[]>('/tickets')
+    const data = await apiClient.get<{ tickets: Ticket[]; count: number }>('/tickets')
+    return data.tickets
   },
 
-  // Get single ticket by ID
   getTicket: async (ticketId: string): Promise<Ticket> => {
-    return apiClient.get<Ticket>(`/tickets/${ticketId}`)
+    const encodedId = encodeURIComponent(ticketId)
+    const data = await apiClient.get<{ ticket: Ticket; comments: Comment[]; attachments: Attachment[] }>(`/tickets/${encodedId}`)
+    return { ...data.ticket, comments: data.comments, attachments: data.attachments || [] }
   },
 
-  // Create new ticket
   createTicket: async (data: CreateTicketInput): Promise<Ticket> => {
-    return apiClient.post<Ticket>('/tickets', data)
+    const res = await apiClient.post<{ message: string; ticket: Ticket }>('/tickets', data)
+    return res.ticket
   },
 
-  // Add comment to ticket
   addComment: async (ticketId: string, data: CreateCommentInput): Promise<Comment> => {
-    return apiClient.post<Comment>(`/tickets/${ticketId}/comments`, data)
+    const encodedId = encodeURIComponent(ticketId)
+    const res = await apiClient.post<{ message: string; comment: Comment }>(`/tickets/${encodedId}/comments`, data)
+    return res.comment
   },
 
-  // Get presigned URL for file upload
-  getPresignedUrl: async (ticketId: string, fileName: string, fileType: string): Promise<PresignedUrlResponse> => {
-    return apiClient.post<PresignedUrlResponse>(`/tickets/${ticketId}/attachments/presign`, {
-      fileName,
-      fileType,
-    })
+  getPresignedUrl: async (ticketId: string, fileName: string, contentType: string): Promise<PresignedUrlResponse> => {
+    const encodedId = encodeURIComponent(ticketId)
+    return apiClient.post<PresignedUrlResponse>(`/tickets/${encodedId}/attachments/presign`, { fileName, contentType })
   },
 
-  // Upload file to S3 using presigned URL
-  uploadFile: async (presignedUrl: string, file: File): Promise<void> => {
-    const response = await fetch(presignedUrl, {
+  uploadFile: async (uploadUrl: string, file: File): Promise<void> => {
+    const response = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
-      headers: {
-        'Content-Type': file.type,
-      },
+      headers: { 'Content-Type': file.type },
     })
-
-    if (!response.ok) {
-      throw new Error('File upload failed')
-    }
+    if (!response.ok) throw new Error("Échec de l'upload")
   },
 }

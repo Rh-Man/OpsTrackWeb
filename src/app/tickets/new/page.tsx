@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ticketsApi } from '@/lib/api/tickets'
 import { TicketPriority } from '@/types'
@@ -29,12 +29,8 @@ export default function NewTicketPage() {
     setIsLoading(true)
 
     try {
-      const ticket = await ticketsApi.createTicket({
-        title,
-        description,
-        priority,
-      })
-      router.push(`/tickets/${ticket.ticketId}`)
+      const ticket = await ticketsApi.createTicket({ title, description })
+      router.push(`/tickets/${encodeURIComponent(ticket.ticketId)}`)
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la création du ticket')
       setIsLoading(false)
@@ -120,9 +116,9 @@ export default function NewTicketPage() {
               </div>
 
               <div className="flex gap-3 pt-6 border-t">
-                <Button 
-                  type="submit" 
-                  disabled={isLoading} 
+                <Button
+                  type="submit"
+                  disabled={isLoading}
                   className="flex-1 h-12 bg-gradient-to-r from-cyan-600 to-sky-600 hover:from-cyan-700 hover:to-sky-700 text-white shadow-lg hover:shadow-xl transition-all text-base font-semibold"
                 >
                   {isLoading ? (
@@ -140,10 +136,10 @@ export default function NewTicketPage() {
                   )}
                 </Button>
                 <Link href="/dashboard" className="flex-1">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full h-12 text-base font-semibold border-2 hover:bg-gray-50" 
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-12 text-base font-semibold border-2 hover:bg-gray-50"
                     disabled={isLoading}
                   >
                     Annuler
@@ -153,8 +149,6 @@ export default function NewTicketPage() {
             </form>
           </CardContent>
         </Card>
-
-     
       </div>
     </ProtectedLayout>
   )

@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -10,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-export default function ConfirmPage() {
+function ConfirmForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const emailFromUrl = searchParams.get('email') || ''
@@ -37,7 +38,6 @@ export default function ConfirmPage() {
         setError(result.error || 'Code de vérification invalide')
       }
     } catch (err: any) {
-      console.error('Erreur de confirmation:', err)
       setError(err.message || 'Code de vérification invalide')
     } finally {
       setIsLoading(false)
@@ -49,15 +49,11 @@ export default function ConfirmPage() {
       setError('Veuillez entrer votre email')
       return
     }
-
     setError('')
     setIsResending(true)
-
     try {
-      // TODO: Implement resend code API when backend is ready
       alert('Fonctionnalité de renvoi de code à implémenter dans le backend')
     } catch (err: any) {
-      console.error('Erreur de renvoi:', err)
       setError(err.message || 'Impossible de renvoyer le code')
     } finally {
       setIsResending(false)
@@ -87,7 +83,6 @@ export default function ConfirmPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-sky-50 px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-block gradient-primary p-3 rounded-2xl mb-4 shadow-glow">
             <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,7 +109,6 @@ export default function ConfirmPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <Input
@@ -128,7 +122,6 @@ export default function ConfirmPage() {
                   className="h-11"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="code" className="text-sm font-medium">Code de vérification</Label>
                 <Input
@@ -148,14 +141,13 @@ export default function ConfirmPage() {
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-2">
-              <Button 
-                type="submit" 
-                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all" 
+              <Button
+                type="submit"
+                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all"
                 disabled={isLoading || code.length !== 6}
               >
                 {isLoading ? 'Vérification...' : 'Confirmer mon email'}
               </Button>
-
               <div className="relative w-full">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" />
@@ -164,7 +156,6 @@ export default function ConfirmPage() {
                   <span className="bg-white px-2 text-muted-foreground">ou</span>
                 </div>
               </div>
-
               <Button
                 type="button"
                 variant="outline"
@@ -174,7 +165,6 @@ export default function ConfirmPage() {
               >
                 {isResending ? 'Envoi en cours...' : 'Renvoyer le code'}
               </Button>
-
               <p className="text-sm text-center text-muted-foreground">
                 Déjà vérifié ?{' '}
                 <Link href="/login" className="text-cyan-600 hover:text-cyan-700 font-semibold hover:underline">
@@ -186,5 +176,17 @@ export default function ConfirmPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ConfirmPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-sky-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-200 border-t-cyan-600"></div>
+      </div>
+    }>
+      <ConfirmForm />
+    </Suspense>
   )
 }

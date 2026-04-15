@@ -8,18 +8,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { Ticket, TicketStatus, TicketPriority } from '@/types'
-import { Plus, AlertCircle, Ticket } from 'lucide-react'
+import type { Ticket } from '@/types'
+import { Plus, AlertCircle, Ticket as TicketIcon } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
-const statusColors: Record<TicketStatus, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  in_progress: 'bg-blue-100 text-blue-800',
+  resolved: 'bg-green-100 text-green-800',
+  closed: 'bg-gray-100 text-gray-800',
 }
 
-const priorityColors: Record<TicketPriority, string> = {
+const priorityColors: Record<string, string> = {
   LOW: 'bg-gray-100 text-gray-800',
   MEDIUM: 'bg-blue-100 text-blue-800',
   HIGH: 'bg-orange-100 text-orange-800',
@@ -32,45 +32,11 @@ export default function DashboardPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // MODE DÉVELOPPEMENT : Données mockées pour voir l'interface
-    const mockTickets: Ticket[] = [
-      {
-        ticketId: '1',
-        userId: 'user1',
-        title: 'Problème de connexion à la base de données',
-        description: 'Impossible de se connecter à la base de données de production depuis ce matin.',
-        status: 'PENDING' as TicketStatus,
-        priority: 'HIGH' as TicketPriority,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        ticketId: '2',
-        userId: 'user1',
-        title: 'Erreur 500 sur la page de paiement',
-        description: 'Les utilisateurs reçoivent une erreur 500 lors du paiement.',
-        status: 'IN_PROGRESS' as TicketStatus,
-        priority: 'CRITICAL' as TicketPriority,
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        updatedAt: new Date().toISOString(),
-      },
-      {
-        ticketId: '3',
-        userId: 'user1',
-        title: 'Mise à jour de la documentation',
-        description: 'La documentation API doit être mise à jour avec les nouveaux endpoints.',
-        status: 'RESOLVED' as TicketStatus,
-        priority: 'LOW' as TicketPriority,
-        createdAt: new Date(Date.now() - 172800000).toISOString(),
-        updatedAt: new Date(Date.now() - 86400000).toISOString(),
-      },
-    ]
-    setTickets(mockTickets)
-    // Décommenter pour utiliser l'API réelle :
-    // loadTickets()
+    loadTickets()
   }, [])
 
   const loadTickets = async () => {
+    setIsLoading(true)
     try {
       const data = await ticketsApi.getTickets()
       setTickets(data)
@@ -84,7 +50,6 @@ export default function DashboardPage() {
   return (
     <ProtectedLayout>
       <div className="space-y-6">
-        {/* Header avec stats */}
         <div className="relative overflow-hidden rounded-2xl gradient-primary p-8 text-white shadow-glow">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
@@ -101,7 +66,6 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             </div>
-            
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">Total</p>
@@ -109,21 +73,15 @@ export default function DashboardPage() {
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">En attente</p>
-                <p className="text-4xl font-bold">
-                  {tickets.filter(t => t.status === 'PENDING').length}
-                </p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'pending').length}</p>
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">En cours</p>
-                <p className="text-4xl font-bold">
-                  {tickets.filter(t => t.status === 'IN_PROGRESS').length}
-                </p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'in_progress').length}</p>
               </div>
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
                 <p className="text-cyan-100 text-xs font-medium mb-2 uppercase tracking-wide">Résolus</p>
-                <p className="text-4xl font-bold">
-                  {tickets.filter(t => t.status === 'RESOLVED').length}
-                </p>
+                <p className="text-4xl font-bold">{tickets.filter(t => t.status === 'resolved').length}</p>
               </div>
             </div>
           </div>
@@ -148,7 +106,7 @@ export default function DashboardPage() {
           <Card className="border-2 border-dashed border-gray-300 bg-white/50">
             <CardContent className="py-20 text-center">
               <div className="inline-block p-4 gradient-primary rounded-full mb-4">
-                <Ticket className="h-12 w-12 text-white" />
+                <TicketIcon className="h-12 w-12 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Aucun ticket</h3>
               <p className="text-muted-foreground mb-6">Commencez par créer votre premier ticket</p>
@@ -163,13 +121,15 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {tickets.map((ticket) => (
-              <Link key={ticket.ticketId} href={`/tickets/${ticket.ticketId}`}>
+              <Link key={ticket.ticketId} href={`/tickets/${encodeURIComponent(ticket.ticketId)}`}>
                 <Card className="group hover:shadow-xl transition-all cursor-pointer h-full bg-white border-2 hover:border-cyan-200 hover-lift">
                   <CardHeader className="space-y-3 pb-3">
                     <div className="flex justify-between items-start gap-2">
-                      <Badge className={`${priorityColors[ticket.priority]} text-xs px-2.5 py-1 font-medium`}>
-                        {ticket.priority}
-                      </Badge>
+                      {ticket.priority && (
+                        <Badge className={`${priorityColors[ticket.priority]} text-xs px-2.5 py-1 font-medium`}>
+                          {ticket.priority}
+                        </Badge>
+                      )}
                       <Badge className={`${statusColors[ticket.status]} text-xs px-2.5 py-1 font-medium`}>
                         {ticket.status}
                       </Badge>
@@ -184,9 +144,7 @@ export default function DashboardPage() {
                     </CardDescription>
                     <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t">
                       <span>Créé le {formatDate(ticket.createdAt)}</span>
-                      <span className="text-cyan-600 font-medium group-hover:underline">
-                        Voir détails →
-                      </span>
+                      <span className="text-cyan-600 font-medium group-hover:underline">Voir détails →</span>
                     </div>
                   </CardContent>
                 </Card>

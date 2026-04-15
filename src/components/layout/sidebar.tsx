@@ -3,20 +3,16 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
-import { 
-  LayoutDashboard, 
-  Plus, 
-  Ticket, 
-  User, 
-  LogOut, 
-  CheckCircle,
-  Clock,
-  AlertCircle,
+import {
+  LayoutDashboard,
+  Plus,
+  Ticket,
+  User,
+  LogOut,
   Menu,
   X,
   ChevronDown,
   ChevronLeft,
-  ChevronRight
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
@@ -34,45 +30,32 @@ export function Sidebar() {
     router.push('/login')
   }
 
-  // Close profile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false)
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
   const navItems = [
-    { 
-      href: '/dashboard', 
-      label: 'Tableau de bord', 
-      icon: LayoutDashboard,
-    },
-    { 
-      href: '/tickets/new', 
-      label: 'Nouveau ticket', 
-      icon: Plus,
-    },
+    { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/tickets/new', label: 'Nouveau ticket', icon: Plus },
   ]
 
   const isActive = (href: string) => {
-    if (href === '/dashboard') {
-      return pathname === href
-    }
+    if (href === '/dashboard') return pathname === href
     return pathname.startsWith(href)
   }
 
   const SidebarContent = ({ collapsed = false }: { collapsed?: boolean }) => (
     <>
-      {/* Logo */}
-      <div className={cn("p-6", collapsed && "px-3")}>
-        <Link 
-          href="/dashboard" 
-          className={cn("flex items-center space-x-3 group", collapsed && "justify-center")} 
+      <div className={cn('p-6', collapsed && 'px-3')}>
+        <Link
+          href="/dashboard"
+          className={cn('flex items-center space-x-3 group', collapsed && 'justify-center')}
           onClick={() => setIsMobileMenuOpen(false)}
         >
           <div className="relative">
@@ -84,17 +67,16 @@ export function Sidebar() {
           {!collapsed && (
             <div>
               <span className="font-bold text-xl text-gray-900">OpsTrack</span>
-              <p className="text-xs text-gray-500">Gestion d'incidents</p>
+              <p className="text-xs text-gray-500">Gestion d&apos;incidents</p>
             </div>
           )}
         </Link>
       </div>
 
-      {/* Navigation */}
-      <nav className={cn("flex-1 px-3 space-y-1 overflow-y-auto", collapsed && "px-2")}>
+      <nav className={cn('flex-1 px-3 space-y-1 overflow-y-auto', collapsed && 'px-2')}>
         <p className={cn(
-          "text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2",
-          collapsed && "text-center px-0"
+          'text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2',
+          collapsed && 'text-center px-0'
         )}>
           {collapsed ? '•••' : 'Navigation'}
         </p>
@@ -106,9 +88,7 @@ export function Sidebar() {
               <div
                 className={cn(
                   'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
-                  active
-                    ? 'gradient-primary text-white shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100',
+                  active ? 'gradient-primary text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100',
                   collapsed && 'justify-center px-2'
                 )}
                 title={collapsed ? item.label : undefined}
@@ -121,50 +101,45 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User Info with Dropdown - Bottom */}
-      <div className={cn("p-4 border-t relative", collapsed && "px-2")} ref={profileMenuRef}>
+      <div className={cn('p-4 border-t relative', collapsed && 'px-2')} ref={profileMenuRef}>
         <button
           onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
           className={cn(
-            "flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full",
-            collapsed && "justify-center px-2"
+            'flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors group w-full',
+            collapsed && 'justify-center px-2'
           )}
         >
           <div className="h-10 w-10 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
             <span className="text-white font-semibold text-sm">
-              {(user?.email?.charAt(0) || 'D').toUpperCase()}
+              {(user?.email?.charAt(0) || 'U').toUpperCase()}
             </span>
           </div>
           {!collapsed && (
             <>
               <div className="flex-1 min-w-0 text-left">
                 <p className="font-medium text-sm truncate text-gray-900">
-                  {user?.email?.split('@')[0] || 'demo'}
+                  {user?.email?.split('@')[0] || 'utilisateur'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {user?.email || 'demo@opstrack.com'}
+                  {user?.email || ''}
                 </p>
               </div>
               <ChevronDown className={cn(
-                "h-4 w-4 text-gray-400 transition-transform",
-                isProfileMenuOpen && "rotate-180"
+                'h-4 w-4 text-gray-400 transition-transform',
+                isProfileMenuOpen && 'rotate-180'
               )} />
             </>
           )}
         </button>
 
-        {/* Dropdown Menu */}
         {isProfileMenuOpen && (
           <div className={cn(
-            "absolute bottom-full mb-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50",
-            collapsed ? "left-2 right-2" : "left-4 right-4"
+            'absolute bottom-full mb-2 bg-white rounded-lg shadow-xl border-2 border-gray-200 overflow-hidden z-50',
+            collapsed ? 'left-2 right-2' : 'left-4 right-4'
           )}>
             <Link
               href="/profile"
-              onClick={() => {
-                setIsProfileMenuOpen(false)
-                setIsMobileMenuOpen(false)
-              }}
+              onClick={() => { setIsProfileMenuOpen(false); setIsMobileMenuOpen(false) }}
               className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors text-gray-900"
             >
               <User className="h-5 w-5" />
@@ -172,10 +147,7 @@ export function Sidebar() {
             </Link>
             <div className="border-t border-gray-200"></div>
             <button
-              onClick={() => {
-                setIsProfileMenuOpen(false)
-                handleSignOut()
-              }}
+              onClick={() => { setIsProfileMenuOpen(false); handleSignOut() }}
               className="flex items-center space-x-3 px-4 py-3 hover:bg-red-50 transition-colors text-red-600 hover:text-red-700 w-full"
             >
               <LogOut className="h-5 w-5" />
@@ -185,13 +157,12 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Collapse Button - Desktop only */}
       {!isMobileMenuOpen && (
         <button
           onClick={() => setIsCollapsed(!collapsed)}
           className={cn(
-            "hidden lg:flex absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 hover:bg-gray-50 transition-colors shadow-md z-50",
-            collapsed && "rotate-180"
+            'hidden lg:flex absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1.5 hover:bg-gray-50 transition-colors shadow-md z-50',
+            collapsed && 'rotate-180'
           )}
         >
           <ChevronLeft className="h-4 w-4 text-gray-600" />
@@ -202,7 +173,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors"
@@ -214,34 +184,28 @@ export function Sidebar() {
         )}
       </button>
 
-      {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={cn(
-          "hidden lg:flex fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex-col z-40 transition-all duration-300",
-          isCollapsed ? "w-20" : "w-64"
+          'hidden lg:flex fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex-col z-40 transition-all duration-300',
+          isCollapsed ? 'w-20' : 'w-64'
         )}
       >
         <SidebarContent collapsed={isCollapsed} />
       </aside>
 
-      {/* Spacer for desktop - pushes content to the right */}
-      <div 
+      <div
         className={cn(
-          "hidden lg:block flex-shrink-0 transition-all duration-300",
-          isCollapsed ? "w-20" : "w-64"
+          'hidden lg:block flex-shrink-0 transition-all duration-300',
+          isCollapsed ? 'w-20' : 'w-64'
         )}
       />
 
-      {/* Mobile Sidebar */}
       {isMobileMenuOpen && (
         <>
-          {/* Overlay */}
-          <div 
+          <div
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          
-          {/* Sidebar */}
           <aside className="lg:hidden fixed left-0 top-0 h-screen w-72 bg-white shadow-2xl flex flex-col z-50 animate-in slide-in-from-left">
             <SidebarContent />
           </aside>
@@ -250,4 +214,3 @@ export function Sidebar() {
     </>
   )
 }
-

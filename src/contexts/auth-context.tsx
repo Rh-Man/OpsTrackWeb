@@ -9,7 +9,7 @@ interface AuthContextType {
   isLoading: boolean
   isAuthenticated: boolean
   signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
-  signUp: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>
+  signUp: (email: string, password: string, givenName: string, familyName?: string) => Promise<{ success: boolean; error?: string }>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
 }
@@ -25,13 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { success, user: cognitoUser } = await authHelpers.getCurrentUser()
       if (success && cognitoUser) {
         setUser({
-          id: cognitoUser.userId,
-          email: cognitoUser.signInDetails?.loginId || '',
+          userId: cognitoUser.userId,
+          email: cognitoUser.email || '',
         })
       } else {
         setUser(null)
       }
-    } catch (error) {
+    } catch {
       setUser(null)
     } finally {
       setIsLoading(false)
@@ -44,14 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const result = await authHelpers.signIn({ email, password })
-    if (result.success) {
-      await loadUser()
-    }
+    if (result.success) await loadUser()
     return result
   }
 
-  const signUp = async (email: string, password: string, name?: string) => {
-    return authHelpers.signUp({ email, password, name })
+  const signUp = async (email: string, password: string, givenName: string, familyName?: string) => {
+    return authHelpers.signUp({ email, password, givenName, familyName })
   }
 
   const signOut = async () => {
@@ -64,17 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        isAuthenticated: !!user,
-        signIn,
-        signUp,
-        signOut,
-        refreshUser,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, signIn, signUp, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )
@@ -82,8 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider')
   return context
 }

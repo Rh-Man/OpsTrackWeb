@@ -1,15 +1,12 @@
 export interface User {
-  id: string
+  userId: string
   email: string
-  name?: string
+  givenName?: string
+  familyName?: string
+  emailVerified?: boolean
 }
 
-export enum TicketStatus {
-  PENDING = 'PENDING',
-  IN_PROGRESS = 'IN_PROGRESS',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED',
-}
+export type TicketStatus = 'pending' | 'in_progress' | 'resolved' | 'closed'
 
 export enum TicketPriority {
   LOW = 'LOW',
@@ -24,7 +21,7 @@ export interface Ticket {
   title: string
   description: string
   status: TicketStatus
-  priority: TicketPriority
+  priority?: TicketPriority
   createdAt: string
   updatedAt: string
   attachments?: Attachment[]
@@ -33,11 +30,10 @@ export interface Ticket {
 
 export interface Comment {
   commentId: string
-  ticketId: string
+  ticketId?: string
   userId: string
-  content: string
+  text: string
   createdAt: string
-  userName?: string
 }
 
 export interface Attachment {
@@ -54,14 +50,14 @@ export interface Attachment {
 export interface CreateTicketInput {
   title: string
   description: string
-  priority: TicketPriority
 }
 
 export interface CreateCommentInput {
-  content: string
+  text: string
 }
 
 export interface PresignedUrlResponse {
   uploadUrl: string
-  fileKey: string
+  key: string
+  expiresIn: number
 }

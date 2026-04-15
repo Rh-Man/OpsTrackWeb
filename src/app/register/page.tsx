@@ -15,25 +15,24 @@ export default function RegisterPage() {
   const { signUp } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
+  const [givenName, setGivenName] = useState('')
+  const [familyName, setFamilyName] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-
-  // MODE DÉVELOPPEMENT : Redirection désactivée
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
 
-    const result = await signUp(email, password, name)
+    const result = await signUp(email, password, givenName, familyName)
 
     if (result.success) {
       setSuccess(true)
       setTimeout(() => router.push(`/confirm?email=${encodeURIComponent(email)}`), 2000)
     } else {
-      setError(result.error || 'Échec de l\'inscription')
+      setError(result.error || "Échec de l&apos;inscription")
       setIsLoading(false)
     }
   }
@@ -85,20 +84,35 @@ export default function RegisterPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium">Nom (optionnel)</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Votre nom"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                  className="h-11"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="givenName" className="text-sm font-medium">Prénom *</Label>
+                  <Input
+                    id="givenName"
+                    type="text"
+                    placeholder="Prénom"
+                    value={givenName}
+                    onChange={(e) => setGivenName(e.target.value)}
+                    required
+                    disabled={isLoading}
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="familyName" className="text-sm font-medium">Nom</Label>
+                  <Input
+                    id="familyName"
+                    type="text"
+                    placeholder="Nom"
+                    value={familyName}
+                    onChange={(e) => setFamilyName(e.target.value)}
+                    disabled={isLoading}
+                    className="h-11"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -111,7 +125,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Mot de passe</Label>
+                <Label htmlFor="password" className="text-sm font-medium">Mot de passe *</Label>
                 <Input
                   id="password"
                   type="password"
@@ -123,22 +137,20 @@ export default function RegisterPage() {
                   className="h-11"
                 />
                 <p className="text-xs text-muted-foreground bg-cyan-50 p-2 rounded">
-                  Min. 8 caractères avec majuscule, minuscule, chiffre et caractère spécial
+                  Min. 8 caractères avec majuscule, minuscule et chiffre
                 </p>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4 pt-2">
-              <Button 
-                type="submit" 
-                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all" 
+              <Button
+                type="submit"
+                className="w-full h-11 gradient-primary shadow-lg hover:shadow-glow transition-all"
                 disabled={isLoading}
               >
                 {isLoading ? 'Création du compte...' : 'Créer mon compte'}
               </Button>
               <div className="relative w-full">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white px-2 text-muted-foreground">ou</span>
                 </div>

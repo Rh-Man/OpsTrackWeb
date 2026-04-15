@@ -16,18 +16,11 @@ export default function ProfilePage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    // MODE DÉVELOPPEMENT : Données mockées
-    const mockUser: User = {
-      id: 'user-123',
-      email: 'demo@opstrack.com',
-      name: 'Utilisateur Demo',
-    }
-    setUser(mockUser)
-    // Décommenter pour utiliser l'API réelle :
-    // loadUser()
+    loadUser()
   }, [])
 
   const loadUser = async () => {
+    setIsLoading(true)
     try {
       const data = await userApi.getMe()
       setUser(data)
@@ -83,7 +76,9 @@ export default function ProfilePage() {
                       <UserIcon className="h-10 w-10 text-white" />
                     </div>
                     <div>
-                      <p className="text-2xl font-bold">{user?.name || 'Utilisateur'}</p>
+                      <p className="text-2xl font-bold">
+                        {user?.givenName ? `${user.givenName} ${user.familyName || ''}`.trim() : 'Utilisateur'}
+                      </p>
                       <p className="text-sm text-muted-foreground">Membre actif</p>
                     </div>
                   </div>
@@ -108,7 +103,7 @@ export default function ProfilePage() {
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-700">Identifiant unique</p>
                         <p className="text-sm text-gray-900 font-mono mt-1 break-all">
-                          {user?.id || authUser?.id}
+                          {user?.userId || authUser?.userId}
                         </p>
                       </div>
                     </div>

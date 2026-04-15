@@ -1,7 +1,8 @@
 export interface SignUpParams {
   email: string
   password: string
-  name?: string
+  givenName: string
+  familyName?: string
 }
 
 export interface SignInParams {
@@ -17,26 +18,18 @@ export interface ConfirmSignUpParams {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 export const authHelpers = {
-  signUp: async ({ email, password, name }: SignUpParams) => {
+  signUp: async ({ email, password, givenName, familyName }: SignUpParams) => {
     try {
       const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, givenName, familyName }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Registration failed' }
-      }
-
+      if (!response.ok) return { success: false, error: data.message || 'Inscription échouée' }
       return { success: true, userId: data.userId }
     } catch (error: any) {
-      console.error('SignUp error:', error)
-      return { success: false, error: error.message || 'Network error' }
+      return { success: false, error: error.message || 'Erreur réseau' }
     }
   },
 
@@ -44,22 +37,14 @@ export const authHelpers = {
     try {
       const response = await fetch(`${API_URL}/auth/confirm`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Confirmation failed' }
-      }
-
+      if (!response.ok) return { success: false, error: data.message || 'Confirmation échouée' }
       return { success: true }
     } catch (error: any) {
-      console.error('ConfirmSignUp error:', error)
-      return { success: false, error: error.message || 'Network error' }
+      return { success: false, error: error.message || 'Erreur réseau' }
     }
   },
 
@@ -67,42 +52,25 @@ export const authHelpers = {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       })
-
       const data = await response.json()
-
-      if (!response.ok) {
-        return { success: false, error: data.message || 'Login failed' }
-      }
-
-      // Store tokens in localStorage
-      if (data.token) {
-        localStorage.setItem('accessToken', data.token)
-      }
-      if (data.refreshToken) {
-        localStorage.setItem('refreshToken', data.refreshToken)
-      }
-      if (data.idToken) {
-        localStorage.setItem('idToken', data.idToken)
-      }
-
+      if (!response.ok) return { success: false, error: data.message || 'Connexion échouée' }
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
+      if (data.idToken) localStorage.setItem('idToken', data.idToken)
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
       return { success: true }
     } catch (error: any) {
-      console.error('SignIn error:', error)
-      return { success: false, error: error.message || 'Network error' }
+      return { success: false, error: error.message || 'Erreur réseau' }
     }
   },
 
   signOut: async () => {
     try {
-      // Clear tokens from localStorage
       localStorage.removeItem('accessToken')
-      localStorage.removeItem('refreshToken')
       localStorage.removeItem('idToken')
+      localStorage.removeItem('refreshToken')
       return { success: true }
     } catch (error: any) {
       return { success: false, error: error.message }
@@ -111,30 +79,39 @@ export const authHelpers = {
 
   getCurrentUser: async () => {
     try {
-      const token = authHelpers.getAccessToken()
-      if (!token) {
-        return { success: false, user: null }
-      }
-
-      // Decode JWT to get user info (basic implementation)
+      const token = localStorage.getItem('idToken')
+      if (!token) return { success: false, user: null }
       const payload = JSON.parse(atob(token.split('.')[1]))
-      
       return {
         success: true,
-        user: {
-          userId: payload.sub,
-          signInDetails: {
-            loginId: payload.email || payload.username,
-          },
-        },
+        user: { userId: payload.sub, email: payload.email },
       }
-    } catch (error) {
+    } catch {
       return { success: false, user: null }
     }
   },
 
   getAccessToken: () => {
     if (typeof window === 'undefined') return null
-    return localStorage.getItem('accessToken')
+    return localStorage.getItem('idToken')
+  },
+
+  refreshTokens: async (): Promise<boolean> => {
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
+      if (!refreshToken) return false
+      const response = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      })
+      if (!response.ok) return false
+      const data = await response.json()
+      if (data.idToken) localStorage.setItem('idToken', data.idToken)
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
+      return true
+    } catch {
+      return false
+    }
   },
 }

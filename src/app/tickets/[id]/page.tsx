@@ -2,28 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import Link from 'next/link'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { CommentList } from '@/components/tickets/comment-list'
 import { CommentForm } from '@/components/tickets/comment-form'
 import { FileUpload } from '@/components/tickets/file-upload'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { Ticket, TicketStatus, TicketPriority } from '@/types'
-import { ArrowLeft, AlertCircle, Paperclip, Upload } from 'lucide-react'
+import type { Ticket } from '@/types'
+import { AlertCircle, Paperclip, Upload } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
-const statusColors: Record<TicketStatus, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
-  RESOLVED: 'bg-green-100 text-green-800',
-  CLOSED: 'bg-gray-100 text-gray-800',
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-100 text-yellow-800',
+  in_progress: 'bg-blue-100 text-blue-800',
+  resolved: 'bg-green-100 text-green-800',
+  closed: 'bg-gray-100 text-gray-800',
 }
 
-const priorityColors: Record<TicketPriority, string> = {
+const priorityColors: Record<string, string> = {
   LOW: 'bg-gray-100 text-gray-800',
   MEDIUM: 'bg-blue-100 text-blue-800',
   HIGH: 'bg-orange-100 text-orange-800',
@@ -32,60 +30,19 @@ const priorityColors: Record<TicketPriority, string> = {
 
 export default function TicketDetailPage() {
   const params = useParams()
-  const ticketId = params.id as string
+  const ticketId = decodeURIComponent(params.id as string)
 
   const [ticket, setTicket] = useState<Ticket | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // MODE DÉVELOPPEMENT : Données mockées
-    const mockTicket: Ticket = {
-      ticketId: ticketId,
-      userId: 'user1',
-      title: 'Problème de connexion à la base de données',
-      description: 'Impossible de se connecter à la base de données de production depuis ce matin.\n\nLes logs montrent une erreur de timeout.\n\nÀ investiguer de toute urgence.',
-      status: 'IN_PROGRESS' as TicketStatus,
-      priority: 'HIGH' as TicketPriority,
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      updatedAt: new Date().toISOString(),
-      comments: [
-        {
-          commentId: 'c1',
-          ticketId: ticketId,
-          userId: 'user2',
-          userName: 'Jean Dupont',
-          content: 'Je regarde ça tout de suite.',
-          createdAt: new Date(Date.now() - 1800000).toISOString(),
-        },
-        {
-          commentId: 'c2',
-          ticketId: ticketId,
-          userId: 'user1',
-          userName: 'Marie Martin',
-          content: 'Merci ! C\'est urgent, nos clients sont impactés.',
-          createdAt: new Date(Date.now() - 900000).toISOString(),
-        },
-      ],
-      attachments: [
-        {
-          attachmentId: 'a1',
-          ticketId: ticketId,
-          fileName: 'logs-error.txt',
-          fileSize: 15420,
-          fileType: 'text/plain',
-          s3Key: 'attachments/logs-error.txt',
-          uploadedAt: new Date(Date.now() - 3000000).toISOString(),
-          url: '#',
-        },
-      ],
-    }
-    setTicket(mockTicket)
-    // Décommenter pour utiliser l'API réelle :
-    // loadTicket()
+    loadTicket()
   }, [ticketId])
 
   const loadTicket = async () => {
+    setIsLoading(true)
     try {
       const data = await ticketsApi.getTicket(ticketId)
       setTicket(data)
@@ -96,8 +53,8 @@ export default function TicketDetailPage() {
     }
   }
 
-  const handleAddComment = async (content: string) => {
-    await ticketsApi.addComment(ticketId, { content })
+  const handleAddComment = async (text: string) => {
+    await ticketsApi.addComment(ticketId, { text })
     await loadTicket()
   }
 
@@ -130,15 +87,15 @@ export default function TicketDetailPage() {
   return (
     <ProtectedLayout>
       <div className="max-w-5xl space-y-6">
-
-        {/* Ticket Header Card */}
         <Card className="border-2 shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-cyan-50 to-sky-50 border-b px-6 py-4">
             <div className="flex justify-between items-start mb-3">
               <div className="space-x-2">
-                <Badge className={`${priorityColors[ticket.priority]} font-semibold text-sm px-3 py-1`}>
-                  {ticket.priority}
-                </Badge>
+                {ticket.priority && (
+                  <Badge className={`${priorityColors[ticket.priority]} font-semibold text-sm px-3 py-1`}>
+                    {ticket.priority}
+                  </Badge>
+                )}
                 <Badge className={`${statusColors[ticket.status]} font-semibold text-sm px-3 py-1`}>
                   {ticket.status}
                 </Badge>
@@ -208,7 +165,6 @@ export default function TicketDetailPage() {
           </CardContent>
         </Card>
 
-        {/* Upload Section */}
         <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center">
             <Upload className="h-6 w-6 mr-2 text-cyan-600" />
@@ -217,7 +173,6 @@ export default function TicketDetailPage() {
           <FileUpload ticketId={ticketId} onUploadComplete={handleUploadComplete} />
         </div>
 
-        {/* Comments Section */}
         <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center">
             <svg className="h-6 w-6 mr-2 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">

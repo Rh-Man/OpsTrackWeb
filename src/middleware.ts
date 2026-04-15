@@ -7,13 +7,9 @@ const protectedPaths = ['/dashboard', '/tickets', '/profile']
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Check if path is protected
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path))
   const isPublicPath = publicPaths.some(path => pathname.startsWith(path))
 
-  // For now, we'll rely on client-side auth checks
-  // In production, you'd verify the Cognito token here
-  
   return NextResponse.next()
 }
 
