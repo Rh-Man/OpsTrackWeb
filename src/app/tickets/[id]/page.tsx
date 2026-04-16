@@ -165,7 +165,7 @@ export default function TicketDetailPage() {
             )}
           </h2>
           <div className="space-y-4">
-            <CommentForm onSubmit={(text) => addCommentMutation.mutateAsync(text)} />
+            <CommentForm onSubmit={async (text) => { await addCommentMutation.mutateAsync(text) }} />
             <CommentList comments={comments} />
           </div>
         </div>
