@@ -1,41 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAuth } from '@/contexts/auth-context'
 import { userApi } from '@/lib/api/user'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { User, Ticket } from '@/types'
 import { User as UserIcon, Mail, AlertCircle } from 'lucide-react'
 
 export default function ProfilePage() {
   const { user: authUser } = useAuth()
-  const [user, setUser] = useState<User | null>(null)
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  const { data: user, error } = useQuery({
+    queryKey: ['me'],
+    queryFn: userApi.getMe,
+  })
 
-  const loadData = async () => {
-    setIsLoading(true)
-    try {
-      const [userData, ticketsData] = await Promise.all([
-        userApi.getMe(),
-        ticketsApi.getTickets(),
-      ])
-      setUser(userData)
-      setTickets(ticketsData)
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement du profil')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const { data: tickets = [] } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: ticketsApi.getTickets,
+  })
 
   return (
     <ProtectedLayout>
@@ -53,11 +38,11 @@ export default function ProfilePage() {
         {error && (
           <Alert variant="destructive" className="border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{(error as Error).message}</AlertDescription>
           </Alert>
         )}
 
-        {isLoading ? (
+        {!user ? (
           <Card className="border-2 shadow-xl">
             <CardContent className="py-20 text-center">
               <div className="relative inline-block">

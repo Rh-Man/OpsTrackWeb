@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -10,7 +10,6 @@ import { CommentList } from '@/components/tickets/comment-list'
 import { CommentForm } from '@/components/tickets/comment-form'
 import { FileUpload } from '@/components/tickets/file-upload'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { Ticket, Comment } from '@/types'
 import { AlertCircle, Paperclip, Upload } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
@@ -31,47 +30,39 @@ const priorityColors: Record<string, string> = {
 export default function TicketDetailPage() {
   const params = useParams()
   const ticketId = params.id as string
+  const queryClient = useQueryClient()
 
-  const [ticket, setTicket] = useState<Ticket | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { data: ticket, isLoading: ticketLoading, error: ticketError } = useQuery({
+    queryKey: ['ticket', ticketId],
+    queryFn: () => ticketsApi.getTicket(ticketId),
+  })
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    loadTicket()
-  }, [ticketId])
+  const { data: comments = [] } = useQuery({
+    queryKey: ['comments', ticketId],
+    queryFn: () => ticketsApi.getComments(ticketId),
+    enabled: !!ticketId,
+  })
 
-  const loadTicket = async () => {
-    setIsLoading(true)
-    try {
-      // Charger ticket, commentaires et pièces jointes en parallèle
-      const [ticketData, commentsData, attachmentsData] = await Promise.all([
-        ticketsApi.getTicket(ticketId),
-        ticketsApi.getComments(ticketId).catch(() => []),
-        ticketsApi.getAttachments(ticketId).catch(() => []),
-      ])
-      setTicket({ ...ticketData, attachments: attachmentsData })
-      setComments(commentsData)
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement du ticket')
-    } finally {
-      setIsLoading(false)
-    }
+  const { data: attachments = [] } = useQuery({
+    queryKey: ['attachments', ticketId],
+    queryFn: () => ticketsApi.getAttachments(ticketId),
+    enabled: !!ticketId,
+  })
+
+  const addCommentMutation = useMutation({
+    mutationFn: (text: string) => ticketsApi.addComment(ticketId, { content: text }),
+    onSuccess: () => {
+      // Invalide le cache des commentaires → refetch automatique
+      queryClient.invalidateQueries({ queryKey: ['comments', ticketId] })
+    },
+  })
+
+  const handleUploadComplete = () => {
+    // Invalide le cache des attachments → refetch automatique
+    queryClient.invalidateQueries({ queryKey: ['attachments', ticketId] })
   }
 
-  // Nouveau backend utilise "content" au lieu de "text"
-  const handleAddComment = async (text: string) => {
-    await ticketsApi.addComment(ticketId, { content: text })
-    const updatedComments = await ticketsApi.getComments(ticketId).catch(() => [])
-    setComments(updatedComments)
-  }
-
-  const handleUploadComplete = async () => {
-    await loadTicket()
-  }
-
-  if (isLoading) {
+  if (ticketLoading) {
     return (
       <ProtectedLayout>
         <div className="text-center py-12">
@@ -82,12 +73,12 @@ export default function TicketDetailPage() {
     )
   }
 
-  if (error || !ticket) {
+  if (ticketError || !ticket) {
     return (
       <ProtectedLayout>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || 'Ticket introuvable'}</AlertDescription>
+          <AlertDescription>{(ticketError as Error)?.message || 'Ticket introuvable'}</AlertDescription>
         </Alert>
       </ProtectedLayout>
     )
@@ -115,36 +106,24 @@ export default function TicketDetailPage() {
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{ticket.title}</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Créé le {formatDate(ticket.createdAt)}
-              </span>
-              <span className="flex items-center gap-1">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Mis à jour le {formatDate(ticket.updatedAt)}
-              </span>
+              <span>Créé le {formatDate(ticket.createdAt)}</span>
+              <span>Mis à jour le {formatDate(ticket.updatedAt)}</span>
             </div>
           </div>
           <CardContent className="pt-6">
-            <div className="prose max-w-none">
-              <h3 className="text-lg font-semibold mb-3 text-gray-900">Description</h3>
-              <p className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg border">
-                {ticket.description}
-              </p>
-            </div>
+            <h3 className="text-lg font-semibold mb-3 text-gray-900">Description</h3>
+            <p className="whitespace-pre-wrap text-gray-700 leading-relaxed bg-gray-50 p-4 rounded-lg border">
+              {ticket.description}
+            </p>
 
-            {ticket.attachments && ticket.attachments.length > 0 && (
+            {attachments.length > 0 && (
               <div className="mt-8 pt-6 border-t">
                 <h3 className="font-semibold text-lg mb-4 flex items-center text-gray-900">
                   <Paperclip className="h-5 w-5 mr-2 text-cyan-600" />
-                  Pièces jointes ({ticket.attachments.length})
+                  Pièces jointes ({attachments.length})
                 </h3>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {ticket.attachments.map((attachment) => (
+                  {attachments.map((attachment) => (
                     <a
                       key={attachment.attachmentId}
                       href={attachment.url}
@@ -186,7 +165,7 @@ export default function TicketDetailPage() {
             )}
           </h2>
           <div className="space-y-4">
-            <CommentForm onSubmit={handleAddComment} />
+            <CommentForm onSubmit={(text) => addCommentMutation.mutateAsync(text)} />
             <CommentList comments={comments} />
           </div>
         </div>

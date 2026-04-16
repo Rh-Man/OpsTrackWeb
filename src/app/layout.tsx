@@ -3,6 +3,8 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { useState } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -11,6 +13,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+ 
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 30 * 1000,      
+        gcTime: 5 * 60 * 1000,    
+        retry: 1,                   
+        refetchOnWindowFocus: false, 
+      },
+    },
+  }))
+
   return (
     <html lang="fr">
       <head>
@@ -18,9 +32,11 @@ export default function RootLayout({
         <meta name="description" content="Application de gestion de tickets d'incidents" />
       </head>
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </QueryClientProvider>
       </body>
     </html>
   )

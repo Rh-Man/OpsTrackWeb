@@ -1,19 +1,17 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ticketsApi } from '@/lib/api/tickets'
-import type { Ticket } from '@/types'
 import { Plus, AlertCircle, Ticket as TicketIcon } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const statusColors: Record<string, string> = {
-  // Nouveau backend (majuscules)
   OPEN: 'bg-yellow-100 text-yellow-800',
   IN_PROGRESS: 'bg-blue-100 text-blue-800',
   RESOLVED: 'bg-green-100 text-green-800',
@@ -28,25 +26,10 @@ const priorityColors: Record<string, string> = {
 }
 
 export default function DashboardPage() {
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    loadTickets()
-  }, [])
-
-  const loadTickets = async () => {
-    setIsLoading(true)
-    try {
-      const data = await ticketsApi.getTickets()
-      setTickets(data)
-    } catch (err: any) {
-      setError(err.message || 'Erreur lors du chargement des tickets')
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const { data: tickets = [], isLoading, error } = useQuery({
+    queryKey: ['tickets'],
+    queryFn: ticketsApi.getTickets,
+  })
 
   return (
     <ProtectedLayout>
@@ -91,7 +74,7 @@ export default function DashboardPage() {
         {error && (
           <Alert variant="destructive" className="border-red-200 bg-red-50">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription>{(error as Error).message}</AlertDescription>
           </Alert>
         )}
 
@@ -99,7 +82,6 @@ export default function DashboardPage() {
           <div className="text-center py-20">
             <div className="relative inline-block">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-cyan-200 border-t-cyan-600"></div>
-              <div className="absolute inset-0 rounded-full bg-cyan-400 blur-xl opacity-20 animate-pulse"></div>
             </div>
             <p className="mt-6 text-lg font-medium text-gray-700">Chargement des tickets...</p>
           </div>

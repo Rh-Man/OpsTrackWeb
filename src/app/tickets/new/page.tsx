@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +18,7 @@ import Link from 'next/link'
 
 export default function NewTicketPage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.MEDIUM)
@@ -30,7 +32,8 @@ export default function NewTicketPage() {
 
     try {
       const ticket = await ticketsApi.createTicket({ title, description, priority })
-      // Nouveau backend utilise "id" au lieu de "ticketId"
+      // Invalide le cache des tickets → dashboard sera à jour au retour
+      queryClient.invalidateQueries({ queryKey: ['tickets'] })
       router.push(`/tickets/${ticket.id}`)
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la création du ticket')
