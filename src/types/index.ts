@@ -56,7 +56,7 @@ export interface CreateTicketInput {
 }
 
 export interface CreateCommentInput {
-  content: string   // nouveau backend utilise "content"
+  content: string   
 }
 
 export interface PresignedUrlResponse {
