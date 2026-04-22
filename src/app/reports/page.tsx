@@ -33,7 +33,7 @@ export default function ReportsPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Rapports & Statistiques</h1>
-          <p className="text-muted-foreground mt-1">Vue d'ensemble de l'activité OpsTrack</p>
+          <p className="text-muted-foreground mt-1">Vue d&apos;ensemble de l&apos;activité OpsTrack</p>
         </div>
 
         {error && (

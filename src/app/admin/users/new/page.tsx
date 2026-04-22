@@ -52,7 +52,7 @@ export default function NewUserPage() {
               </p>
               <p className="font-semibold text-gray-900 mb-6">{createdEmail}</p>
               <p className="text-sm text-muted-foreground mb-8 bg-cyan-50 p-3 rounded-lg">
-                L'utilisateur recevra un email avec son mot de passe temporaire. Il devra le changer à sa première connexion.
+                L&apos;utilisateur recevra un email avec son mot de passe temporaire. Il devra le changer à sa première connexion.
               </p>
               <div className="flex gap-3 justify-center">
                 <Button onClick={() => { setSuccess(false); setName(''); setEmail(''); }} variant="outline">
@@ -135,7 +135,7 @@ export default function NewUserPage() {
               </div>
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-                <strong>📧 Email automatique :</strong> Un mot de passe temporaire sera généré et envoyé à l'adresse email renseignée. L'utilisateur devra le changer à sa première connexion.
+                <strong>📧 Email automatique :</strong> Un mot de passe temporaire sera généré et envoyé à l&apos;adresse email renseignée. L&apos;utilisateur devra le changer à sa première connexion.
               </div>
 
               <div className="flex gap-3 pt-4 border-t">
