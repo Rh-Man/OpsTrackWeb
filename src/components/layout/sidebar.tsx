@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/auth-context'
+import { useQuery } from '@tanstack/react-query'
+import { userApi } from '@/lib/api/user'
 import {
   LayoutDashboard,
   Plus,
@@ -13,6 +15,9 @@ import {
   X,
   ChevronDown,
   ChevronLeft,
+  Users,
+  BarChart3,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useRef, useEffect } from 'react'
@@ -30,6 +35,15 @@ export function Sidebar() {
     router.push('/login')
   }
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['me'],
+    queryFn: userApi.getMe,
+  })
+
+  const isAdmin = currentUser?.role === 'admin'
+  const isSupervisor = currentUser?.role === 'supervisor'
+  const canManage = isAdmin || isSupervisor
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -43,6 +57,11 @@ export function Sidebar() {
   const navItems = [
     { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
     { href: '/tickets/new', label: 'Nouveau ticket', icon: Plus },
+  ]
+
+  const adminItems = [
+    { href: '/admin/users', label: 'Utilisateurs', icon: Users, roles: ['admin'] },
+    { href: '/reports', label: 'Rapports', icon: BarChart3, roles: ['admin', 'supervisor'] },
   ]
 
   const isActive = (href: string) => {
@@ -99,6 +118,38 @@ export function Sidebar() {
             </Link>
           )
         })}
+
+        {canManage && (
+          <>
+            <p className={cn(
+              'text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2 mt-4',
+              collapsed && 'text-center px-0'
+            )}>
+              {collapsed ? '•••' : 'Administration'}
+            </p>
+            {adminItems
+              .filter(item => item.roles.includes(currentUser?.role || ''))
+              .map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href)
+                return (
+                  <Link key={item.href} href={item.href} onClick={() => setIsMobileMenuOpen(false)}>
+                    <div
+                      className={cn(
+                        'flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-all',
+                        active ? 'gradient-primary text-white shadow-sm' : 'text-gray-700 hover:bg-gray-100',
+                        collapsed && 'justify-center px-2'
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <Icon className={cn('h-5 w-5 flex-shrink-0')} />
+                      {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    </div>
+                  </Link>
+                )
+              })}
+          </>
+        )}
       </nav>
 
       <div className={cn('p-4 border-t relative', collapsed && 'px-2')} ref={profileMenuRef}>
@@ -121,7 +172,9 @@ export function Sidebar() {
                   {user?.email?.split('@')[0] || 'utilisateur'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  {user?.email || ''}
+                  {currentUser?.role ? (
+                    <span className="capitalize font-medium text-cyan-600">{currentUser.role}</span>
+                  ) : user?.email || ''}
                 </p>
               </div>
               <ChevronDown className={cn(

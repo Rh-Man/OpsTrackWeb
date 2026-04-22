@@ -59,6 +59,17 @@ export const authHelpers = {
       })
       const data = await response.json()
       if (!response.ok) return { success: false, error: data.error || data.message || 'Connexion échouée' }
+
+      // Gérer le challenge NEW_PASSWORD_REQUIRED (première connexion)
+      if (data.challenge === 'NEW_PASSWORD_REQUIRED') {
+        return {
+          success: false,
+          challenge: 'NEW_PASSWORD_REQUIRED',
+          session: data.session,
+          email,
+        }
+      }
+
       if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
       if (data.idToken) localStorage.setItem('idToken', data.idToken)
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
@@ -97,6 +108,24 @@ export const authHelpers = {
   getAccessToken: () => {
     if (typeof window === 'undefined') return null
     return localStorage.getItem('idToken')
+  },
+
+  changePassword: async (email: string, session: string, newPassword: string) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, session, newPassword }),
+      })
+      const data = await response.json()
+      if (!response.ok) return { success: false, error: data.error || 'Erreur changement mot de passe' }
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
+      if (data.idToken) localStorage.setItem('idToken', data.idToken)
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
+      return { success: true }
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Erreur réseau' }
+    }
   },
 
   refreshTokens: async (): Promise<boolean> => {

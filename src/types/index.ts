@@ -5,9 +5,9 @@ export interface User {
   givenName?: string
   familyName?: string
   emailVerified?: boolean
+  role?: 'admin' | 'supervisor' | 'agent' | 'user'
 }
 
-// Nouveau backend : statuts en MAJUSCULES
 export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
 
 export enum TicketPriority {
@@ -18,12 +18,13 @@ export enum TicketPriority {
 }
 
 export interface Ticket {
-  id: string        // nouveau backend utilise "id"
+  id: string
   userId: string
   title: string
   description: string
   status: TicketStatus
   priority?: TicketPriority
+  assignedTo?: string
   createdAt: string
   updatedAt: string
   attachments?: Attachment[]
@@ -34,7 +35,7 @@ export interface Comment {
   commentId: string
   ticketId?: string
   userId: string
-  content: string   // nouveau backend utilise "content"
+  content: string
   createdAt: string
 }
 
@@ -56,11 +57,42 @@ export interface CreateTicketInput {
 }
 
 export interface CreateCommentInput {
-  content: string   
+  content: string
 }
 
 export interface PresignedUrlResponse {
   uploadUrl: string
   attachmentId: string
   expiresIn: number
+}
+
+export interface OpsUser {
+  userId: string
+  email: string
+  username?: string
+  role: 'admin' | 'supervisor' | 'agent' | 'user'
+  organizationId?: string
+  createdAt?: string
+}
+
+export interface CreateUserInput {
+  email: string
+  name: string
+  role: 'supervisor' | 'agent'
+}
+
+export interface AssignTicketInput {
+  assigneeId: string
+}
+
+export interface Report {
+  summary: {
+    total: number
+    open: number
+    in_progress: number
+    resolved: number
+    closed: number
+  }
+  byStatus: { status: string; count: number }[]
+  topAssignees: { assignee_id: string; ticket_count: number }[]
 }
