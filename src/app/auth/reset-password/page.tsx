@@ -13,8 +13,9 @@ function ResetPasswordForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
-  const session = searchParams.get('session') || ''
+  const tempFromUrl = searchParams.get('temp') || ''
 
+  const [temporaryPassword, setTemporaryPassword] = useState(tempFromUrl)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -29,13 +30,9 @@ function ResetPasswordForm() {
       return
     }
 
-    if (newPassword.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères')
-      return
-    }
-
     setIsLoading(true)
-    const result = await authHelpers.changePassword(email, session, newPassword)
+    // Le backend attend : email, temporaryPassword, newPassword
+    const result = await authHelpers.changePassword(email, temporaryPassword, newPassword)
 
     if (result.success) {
       router.push('/dashboard')
@@ -74,6 +71,19 @@ function ResetPasswordForm() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+              <div className="space-y-2">
+                <Label htmlFor="temporaryPassword">Mot de passe temporaire (reçu par email)</Label>
+                <Input
+                  id="temporaryPassword"
+                  type="password"
+                  placeholder="Mot de passe temporaire"
+                  value={temporaryPassword}
+                  onChange={(e) => setTemporaryPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  className="h-11"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">Nouveau mot de passe</Label>
                 <Input

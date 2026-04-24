@@ -40,6 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadUser()
+
+    // Synchroniser la déconnexion entre les onglets
+    const handleStorageChange = (e: StorageEvent) => {
+      // Si les tokens sont supprimés dans un autre onglet, déconnecter cet onglet aussi
+      if (e.key === 'idToken' && e.newValue === null) {
+        setUser(null)
+      }
+      // Si un token est ajouté (connexion dans un autre onglet), recharger l'utilisateur
+      if (e.key === 'idToken' && e.newValue !== null) {
+        loadUser()
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
   const signIn = async (email: string, password: string) => {

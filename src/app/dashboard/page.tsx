@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ticketsApi } from '@/lib/api/tickets'
+import { userApi } from '@/lib/api/user'
 import { Plus, AlertCircle, Ticket as TicketIcon } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
@@ -31,6 +32,14 @@ export default function DashboardPage() {
     queryFn: ticketsApi.getTickets,
   })
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['me'],
+    queryFn: userApi.getMe,
+  })
+
+  const isAgent = currentUser?.role === 'agent'
+  const canCreateTicket = currentUser?.role === 'admin' || currentUser?.role === 'supervisor'
+
   return (
     <ProtectedLayout>
       <div className="space-y-6">
@@ -40,15 +49,17 @@ export default function DashboardPage() {
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Mes tickets</h1>
-                <p className="text-cyan-100 text-sm">Gérez vos incidents en temps réel</p>
+                <h1 className="text-3xl font-bold mb-2">{isAgent ? 'Mes tickets assignés' : 'Mes tickets'}</h1>
+                <p className="text-cyan-100 text-sm">{isAgent ? 'Tickets qui vous sont assignés' : 'Gérez vos incidents en temps réel'}</p>
               </div>
-              <Link href="/tickets/new">
-                <Button size="lg" className="bg-white text-cyan-600 hover:bg-cyan-50 shadow-lg">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Nouveau ticket
-                </Button>
-              </Link>
+              {canCreateTicket && (
+                <Link href="/tickets/new">
+                  <Button size="lg" className="bg-white text-cyan-600 hover:bg-cyan-50 shadow-lg">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Nouveau ticket
+                  </Button>
+                </Link>
+              )}
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-5 hover-lift">
@@ -91,14 +102,23 @@ export default function DashboardPage() {
               <div className="inline-block p-4 gradient-primary rounded-full mb-4">
                 <TicketIcon className="h-12 w-12 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">Aucun ticket</h3>
-              <p className="text-muted-foreground mb-6">Commencez par créer votre premier ticket</p>
-              <Link href="/tickets/new">
-                <Button size="lg" className="gradient-primary shadow-lg hover-lift">
-                  <Plus className="mr-2 h-5 w-5" />
-                  Créer un ticket
-                </Button>
-              </Link>
+              {isAgent ? (
+                <>
+                  <h3 className="text-xl font-semibold mb-2">Aucun ticket assigné</h3>
+                  <p className="text-muted-foreground">Vous n'avez pas encore de ticket assigné. Un superviseur ou admin vous en assignera un.</p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-xl font-semibold mb-2">Aucun ticket</h3>
+                  <p className="text-muted-foreground mb-6">Commencez par créer votre premier ticket</p>
+                  <Link href="/tickets/new">
+                    <Button size="lg" className="gradient-primary shadow-lg hover-lift">
+                      <Plus className="mr-2 h-5 w-5" />
+                      Créer un ticket
+                    </Button>
+                  </Link>
+                </>
+              )}
             </CardContent>
           </Card>
         ) : (

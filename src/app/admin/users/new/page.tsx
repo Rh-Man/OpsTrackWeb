@@ -34,6 +34,7 @@ export default function NewUserPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    // Le backend ne prend que email et role (pas name)
     createUserMutation.mutate({ email, name, role })
   }
 

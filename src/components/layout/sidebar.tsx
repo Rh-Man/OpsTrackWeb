@@ -42,7 +42,9 @@ export function Sidebar() {
 
   const isAdmin = currentUser?.role === 'admin'
   const isSupervisor = currentUser?.role === 'supervisor'
+  const isAgent = currentUser?.role === 'agent'
   const canManage = isAdmin || isSupervisor
+  const canCreateTicket = isAdmin || isSupervisor
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -56,7 +58,7 @@ export function Sidebar() {
 
   const navItems = [
     { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
-    { href: '/tickets/new', label: 'Nouveau ticket', icon: Plus },
+    ...(canCreateTicket ? [{ href: '/tickets/new', label: 'Nouveau ticket', icon: Plus }] : []),
   ]
 
   const adminItems = [

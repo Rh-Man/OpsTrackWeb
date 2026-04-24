@@ -124,20 +124,24 @@ export default function ReportsPage() {
                     <p className="text-center text-muted-foreground py-8">Aucun ticket assigné pour le moment</p>
                   ) : (
                     <div className="space-y-3">
-                      {report.topAssignees.map((assignee, index) => (
-                        <div key={assignee.assignee_id} className="flex items-center gap-3">
-                          <span className="text-lg font-bold text-muted-foreground w-6">#{index + 1}</span>
-                          <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">
-                              {assignee.assignee_id.slice(0, 2).toUpperCase()}
-                            </span>
+                      {report.topAssignees.map((assignee, index) => {
+                        const name = assignee.given_name && assignee.family_name
+                          ? `${assignee.given_name} ${assignee.family_name}`
+                          : assignee.email || assignee.assignee_id.slice(0, 12) + '...'
+                        const initials = name.slice(0, 2).toUpperCase()
+                        return (
+                          <div key={assignee.assignee_id} className="flex items-center gap-3">
+                            <span className="text-lg font-bold text-muted-foreground w-6">#{index + 1}</span>
+                            <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">{initials}</span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium">{name}</p>
+                            </div>
+                            <span className="font-bold text-cyan-600">{assignee.ticket_count}</span>
                           </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium font-mono">{assignee.assignee_id.slice(0, 12)}...</p>
-                          </div>
-                          <span className="font-bold text-cyan-600">{assignee.ticket_count}</span>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
                 </CardContent>

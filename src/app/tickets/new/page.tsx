@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,18 +12,29 @@ import { Select } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ticketsApi } from '@/lib/api/tickets'
+import { adminApi } from '@/lib/api/admin'
 import { TicketPriority } from '@/types'
 import { AlertCircle, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function NewTicketPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TicketPriority>(TicketPriority.MEDIUM)
+  const [assignedTo, setAssignedTo] = useState<string>('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // Récupérer la liste des agents/superviseurs si l'utilisateur est admin ou supervisor
+  const { data: assignableUsers = [] } = useQuery({
+    queryKey: ['assignable-users'],
+    queryFn: adminApi.getAssignableUsers,
+    enabled: user?.role === 'admin' || user?.role === 'supervisor',
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +42,11 @@ export default function NewTicketPage() {
     setIsLoading(true)
 
     try {
-      const ticket = await ticketsApi.createTicket({ title, description, priority })
+      const ticketData: any = { title, description, priority }
+      if (assignedTo) {
+        ticketData.assignedTo = assignedTo
+      }
+      const ticket = await ticketsApi.createTicket(ticketData)
       // Invalide le cache des tickets → dashboard sera à jour au retour
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       router.push(`/tickets/${ticket.id}`)
@@ -118,6 +133,29 @@ export default function NewTicketPage() {
                   <option value={TicketPriority.CRITICAL}>🔴 Critique - Service bloqué</option>
                 </Select>
               </div>
+
+              {(user?.role === 'admin' || user?.role === 'supervisor') && assignableUsers.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="assignedTo" className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-100 text-cyan-600 text-xs font-bold">4</span>
+                    Assigner à (optionnel)
+                  </Label>
+                  <Select
+                    id="assignedTo"
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    disabled={isLoading}
+                    className="h-12 text-base border-2 focus:border-cyan-500 focus:ring-cyan-500"
+                  >
+                    <option value="">-- Non assigné --</option>
+                    {assignableUsers.map((u) => (
+                      <option key={u.userId} value={u.userId}>
+                        {u.username || u.email} ({u.role})
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-6 border-t">
                 <Button

@@ -27,7 +27,7 @@ export const ticketsApi = {
   },
 
   // POST /tickets → { ticket: {} }
-  createTicket: async (data: CreateTicketInput): Promise<Ticket> => {
+  createTicket: async (data: CreateTicketInput & { assignedTo?: string }): Promise<Ticket> => {
     const res = await apiClient.post<{ ticket: Ticket }>('/tickets', data)
     return res.ticket
   },
@@ -36,6 +36,11 @@ export const ticketsApi = {
   addComment: async (ticketId: string, data: CreateCommentInput): Promise<Comment> => {
     const res = await apiClient.post<{ comment: Comment }>(`/tickets/${ticketId}/comments`, data)
     return res.comment
+  },
+
+  // PATCH /tickets/{ticketId} → { message, ticketId, status }
+  updateStatus: async (ticketId: string, status: string): Promise<void> => {
+    await apiClient.patch(`/tickets/${ticketId}`, { status })
   },
 
   // POST /tickets/{ticketId}/attachments/presign → { uploadUrl, attachmentId, expiresIn }

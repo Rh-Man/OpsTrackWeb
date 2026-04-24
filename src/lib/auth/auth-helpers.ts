@@ -58,21 +58,28 @@ export const authHelpers = {
         body: JSON.stringify({ email, password }),
       })
       const data = await response.json()
-      if (!response.ok) return { success: false, error: data.error || data.message || 'Connexion échouée' }
-
-      // Gérer le challenge NEW_PASSWORD_REQUIRED (première connexion)
-      if (data.challenge === 'NEW_PASSWORD_REQUIRED') {
+      
+      if (!response.ok) {
+        return { success: false, error: data.error || data.message || 'Connexion échouée' }
+      }
+      
+      // Si le backend retourne un challenge NEW_PASSWORD_REQUIRED
+      if (data.challengeName === 'NEW_PASSWORD_REQUIRED') {
         return {
           success: false,
           challenge: 'NEW_PASSWORD_REQUIRED',
-          session: data.session,
           email,
+          temporaryPassword: password,
+          session: data.session,
+          message: data.message,
         }
       }
-
+      
+      // Connexion réussie - stocker les tokens
       if (data.accessToken) localStorage.setItem('accessToken', data.accessToken)
       if (data.idToken) localStorage.setItem('idToken', data.idToken)
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken)
+      
       return { success: true }
     } catch (error: any) {
       return { success: false, error: error.message || 'Erreur réseau' }
@@ -110,12 +117,12 @@ export const authHelpers = {
     return localStorage.getItem('idToken')
   },
 
-  changePassword: async (email: string, session: string, newPassword: string) => {
+  changePassword: async (email: string, temporaryPassword: string, newPassword: string) => {
     try {
       const response = await fetch(`${API_URL}/auth/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, session, newPassword }),
+        body: JSON.stringify({ email, temporaryPassword, newPassword }),
       })
       const data = await response.json()
       if (!response.ok) return { success: false, error: data.error || 'Erreur changement mot de passe' }

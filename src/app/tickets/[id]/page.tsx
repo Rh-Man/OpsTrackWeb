@@ -1,16 +1,21 @@
 'use client'
 
+import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Select } from '@/components/ui/select'
 import { CommentList } from '@/components/tickets/comment-list'
 import { CommentForm } from '@/components/tickets/comment-form'
 import { FileUpload } from '@/components/tickets/file-upload'
 import { ticketsApi } from '@/lib/api/tickets'
-import { AlertCircle, Paperclip, Upload } from 'lucide-react'
+import { adminApi } from '@/lib/api/admin'
+import { userApi } from '@/lib/api/user'
+import { AlertCircle, Paperclip, Upload, UserCheck } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
 
 const statusColors: Record<string, string> = {
@@ -31,6 +36,9 @@ export default function TicketDetailPage() {
   const params = useParams()
   const ticketId = params.id as string
   const queryClient = useQueryClient()
+  const [selectedAgent, setSelectedAgent] = useState('')
+  const [assignSuccess, setAssignSuccess] = useState(false)
+  const [showReassign, setShowReassign] = useState(false)
 
   const { data: ticket, isLoading: ticketLoading, error: ticketError } = useQuery({
     queryKey: ['ticket', ticketId],
@@ -49,16 +57,58 @@ export default function TicketDetailPage() {
     enabled: !!ticketId,
   })
 
+  const { data: currentUser } = useQuery({
+    queryKey: ['me'],
+    queryFn: userApi.getMe,
+  })
+
+  const { data: agents = [] } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: adminApi.getUsers,
+    enabled: currentUser?.role === 'admin' || currentUser?.role === 'supervisor',
+    // Ignorer les erreurs si l'utilisateur n'a pas les permissions
+    retry: false,
+  })
+
+  const canAssign = currentUser?.role === 'admin' || currentUser?.role === 'supervisor'
+
+  // Récupérer le nom de l'utilisateur assigné
+  const assignedUser = ticket?.assignedTo 
+    ? agents.find(agent => agent.userId === ticket.assignedTo)
+    : null
+  
+  // Afficher le nom ou l'email, sinon l'ID tronqué
+  const assignedToDisplay = assignedUser 
+    ? (ticket.assignedTo === currentUser?.userId 
+        ? `moi (${assignedUser.username || assignedUser.email})`
+        : (assignedUser.username || assignedUser.email))
+    : (ticket?.assignedTo ? `Agent ${ticket.assignedTo.slice(0, 8)}...` : null)
+
   const addCommentMutation = useMutation({
     mutationFn: (text: string) => ticketsApi.addComment(ticketId, { content: text }),
     onSuccess: () => {
-      // Invalide le cache des commentaires → refetch automatique
       queryClient.invalidateQueries({ queryKey: ['comments', ticketId] })
     },
   })
 
+  const assignMutation = useMutation({
+    mutationFn: (assigneeId: string) => adminApi.assignTicket(ticketId, assigneeId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      setAssignSuccess(true)
+      setShowReassign(false)
+      setTimeout(() => setAssignSuccess(false), 3000)
+    },
+  })
+
+  const updateStatusMutation = useMutation({
+    mutationFn: (status: string) => ticketsApi.updateStatus(ticketId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+    },
+  })
+
   const handleUploadComplete = () => {
-    // Invalide le cache des attachments → refetch automatique
     queryClient.invalidateQueries({ queryKey: ['attachments', ticketId] })
   }
 
@@ -108,6 +158,12 @@ export default function TicketDetailPage() {
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>Créé le {formatDate(ticket.createdAt)}</span>
               <span>Mis à jour le {formatDate(ticket.updatedAt)}</span>
+              {assignedToDisplay && (
+                <span className="flex items-center gap-1 text-cyan-600 font-medium">
+                  <UserCheck className="h-4 w-4" />
+                  Assigné à {assignedToDisplay}
+                </span>
+              )}
             </div>
           </div>
           <CardContent className="pt-6">
@@ -145,6 +201,109 @@ export default function TicketDetailPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Boutons de changement de statut - visible uniquement si le ticket est assigné à l'utilisateur connecté */}
+        {ticket.assignedTo === currentUser?.userId && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (          <Card className="border-2 shadow-lg">
+            <CardContent className="pt-6">
+              <h2 className="text-xl font-bold mb-4">Changer le statut</h2>
+              {updateStatusMutation.error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertDescription>{(updateStatusMutation.error as Error).message}</AlertDescription>
+                </Alert>
+              )}
+              <div className="flex gap-3 flex-wrap">
+                {ticket.status === 'OPEN' && (
+                  <Button
+                    onClick={() => updateStatusMutation.mutate('IN_PROGRESS')}
+                    disabled={updateStatusMutation.isPending}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Prendre en charge
+                  </Button>
+                )}
+                {(ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') && (
+                  <Button
+                    onClick={() => updateStatusMutation.mutate('RESOLVED')}
+                    disabled={updateStatusMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {updateStatusMutation.isPending ? 'En cours...' : 'Résoudre'}
+                  </Button>
+                )}
+                {ticket.status === 'RESOLVED' && (
+                  <Button
+                    onClick={() => updateStatusMutation.mutate('CLOSED')}
+                    disabled={updateStatusMutation.isPending}
+                    className="bg-gray-600 hover:bg-gray-700 text-white"
+                  >
+                    Fermer
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {canAssign && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (
+          <Card className="border-2 shadow-lg">
+            <CardContent className="pt-6">
+              <h2 className="text-xl font-bold mb-4 flex items-center">
+                <UserCheck className="h-5 w-5 mr-2 text-cyan-600" />
+                Assigner le ticket
+              </h2>
+              {ticket.assignedTo && !showReassign ? (
+                <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
+                  <span className="text-sm text-cyan-800 font-medium">
+                    Déjà assigné à {assignedToDisplay}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={() => setShowReassign(true)} className="text-xs">
+                    Réassigner
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {assignSuccess && (
+                    <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+                      <AlertDescription>Ticket assigné avec succès !</AlertDescription>
+                    </Alert>
+                  )}
+                  {assignMutation.error && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertDescription>{(assignMutation.error as Error).message}</AlertDescription>
+                    </Alert>
+                  )}
+                  <div className="flex gap-3">
+                    <Select
+                      value={selectedAgent}
+                      onChange={(e) => setSelectedAgent(e.target.value)}
+                      className="flex-1 h-11"
+                      disabled={assignMutation.isPending}
+                    >
+                      <option value="">Sélectionner un agent...</option>
+                      {currentUser && (
+                        <option value={currentUser.userId}>
+                          M'assigner à moi-même
+                        </option>
+                      )}
+                      {agents.filter(a => a.userId !== currentUser?.userId).map((agent) => (
+                        <option key={agent.userId} value={agent.userId}>
+                          {agent.username || agent.email} ({agent.role})
+                        </option>
+                      ))}
+                    </Select>
+                    <Button
+                      onClick={() => selectedAgent && assignMutation.mutate(selectedAgent)}
+                      disabled={!selectedAgent || assignMutation.isPending}
+                      className="gradient-primary h-11 px-6"
+                    >
+                      {assignMutation.isPending ? 'Assignation...' : 'Assigner'}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <div>
           <h2 className="text-2xl font-bold mb-4 flex items-center">

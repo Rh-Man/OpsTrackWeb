@@ -28,7 +28,8 @@ export default function LoginPage() {
     if (result.success) {
       router.push('/dashboard')
     } else if ((result as any).challenge === 'NEW_PASSWORD_REQUIRED') {
-      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}&session=${encodeURIComponent((result as any).session || '')}`)
+      // Passer email ET mot de passe temporaire pour la page reset
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email)}&temp=${encodeURIComponent(password)}`)
     } else {
       setError(result.error || 'Échec de la connexion')
       setIsLoading(false)
