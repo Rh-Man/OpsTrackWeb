@@ -105,7 +105,7 @@ export default function DashboardPage() {
               {isAgent ? (
                 <>
                   <h3 className="text-xl font-semibold mb-2">Aucun ticket assigné</h3>
-                  <p className="text-muted-foreground">Vous n'avez pas encore de ticket assigné. Un superviseur ou admin vous en assignera un.</p>
+                  <p className="text-muted-foreground">Vous n&apos;avez pas encore de ticket assigné. Un superviseur ou admin vous en assignera un.</p>
                 </>
               ) : (
                 <>

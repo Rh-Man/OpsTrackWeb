@@ -79,7 +79,7 @@ export default function TicketDetailPage() {
   
   // Afficher le nom ou l'email, sinon l'ID tronqué
   const assignedToDisplay = assignedUser 
-    ? (ticket.assignedTo === currentUser?.userId 
+    ? (ticket?.assignedTo === currentUser?.userId 
         ? `moi (${assignedUser.username || assignedUser.email})`
         : (assignedUser.username || assignedUser.email))
     : (ticket?.assignedTo ? `Agent ${ticket.assignedTo.slice(0, 8)}...` : null)
@@ -203,7 +203,7 @@ export default function TicketDetailPage() {
         </Card>
 
         {/* Boutons de changement de statut - visible uniquement si le ticket est assigné à l'utilisateur connecté */}
-        {ticket.assignedTo === currentUser?.userId && ticket.status !== 'RESOLVED' && ticket.status !== 'CLOSED' && (          <Card className="border-2 shadow-lg">
+        {ticket.assignedTo === currentUser?.userId && ticket.status !== 'CLOSED' && (          <Card className="border-2 shadow-lg">
             <CardContent className="pt-6">
               <h2 className="text-xl font-bold mb-4">Changer le statut</h2>
               {updateStatusMutation.error && (
@@ -282,7 +282,7 @@ export default function TicketDetailPage() {
                       <option value="">Sélectionner un agent...</option>
                       {currentUser && (
                         <option value={currentUser.userId}>
-                          M'assigner à moi-même
+                          M&apos;assigner à moi-même
                         </option>
                       )}
                       {agents.filter(a => a.userId !== currentUser?.userId).map((agent) => (
