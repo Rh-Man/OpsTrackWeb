@@ -94,5 +94,11 @@ export interface Report {
     closed: number
   }
   byStatus: { status: string; count: number }[]
-  topAssignees: { assignee_id: string; ticket_count: number }[]
+  topAssignees: {
+    assignee_id: string
+    ticket_count: number
+    email: string | null
+    given_name: string | null
+    family_name: string | null
+  }[]
 }
