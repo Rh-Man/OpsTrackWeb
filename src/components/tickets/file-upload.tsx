@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, File, X, AlertCircle, CheckCircle } from 'lucide-react'
 import { formatFileSize } from '@/lib/utils'
+import { usePostHog } from 'posthog-js/react'
 
 interface FileUploadProps {
   ticketId: string
@@ -18,6 +19,7 @@ export function FileUpload({ ticketId, onUploadComplete }: FileUploadProps) {
   const [success, setSuccess] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const posthog = usePostHog()
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -49,6 +51,11 @@ export function FileUpload({ ticketId, onUploadComplete }: FileUploadProps) {
       )
 
       await ticketsApi.uploadFile(uploadUrl, selectedFile)
+      posthog.capture('attachment_uploaded', {
+        ticket_id: ticketId,
+        file_type: selectedFile.type,
+        file_size_kb: Math.round(selectedFile.size / 1024),
+      })
 
       setSuccess(true)
       setSelectedFile(null)

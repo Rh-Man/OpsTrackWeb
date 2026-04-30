@@ -17,6 +17,7 @@ import { TicketPriority } from '@/types'
 import { AlertCircle, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
+import { usePostHog } from 'posthog-js/react'
 
 export default function NewTicketPage() {
   const router = useRouter()
@@ -28,6 +29,7 @@ export default function NewTicketPage() {
   const [assignedTo, setAssignedTo] = useState<string>('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const posthog = usePostHog()
 
   // Récupérer la liste des agents/superviseurs si l'utilisateur est admin ou supervisor
   const { data: assignableUsers = [] } = useQuery({
@@ -47,6 +49,12 @@ export default function NewTicketPage() {
         ticketData.assignedTo = assignedTo
       }
       const ticket = await ticketsApi.createTicket(ticketData)
+      posthog.capture('ticket_created', {
+        ticket_id: ticket.id,
+        priority,
+        has_assignee: !!assignedTo,
+        description_length: description.length,
+      })
       // Invalide le cache des tickets → dashboard sera à jour au retour
       queryClient.invalidateQueries({ queryKey: ['tickets'] })
       router.push(`/tickets/${ticket.id}`)

@@ -3,6 +3,7 @@
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "@/contexts/auth-context"
+import { PostHogProvider } from "@/components/PostHogProvider"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { useState } from "react"
 
@@ -34,7 +35,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            {children}
+            <PostHogProvider>
+              {children}
+            </PostHogProvider>
           </AuthProvider>
         </QueryClientProvider>
       </body>

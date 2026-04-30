@@ -16,6 +16,7 @@ import { ticketsApi } from '@/lib/api/tickets'
 import { adminApi } from '@/lib/api/admin'
 import { userApi } from '@/lib/api/user'
 import { AlertCircle, Paperclip, Upload, UserCheck } from 'lucide-react'
+import { usePostHog } from 'posthog-js/react'
 import { formatDate } from '@/lib/utils'
 
 const statusColors: Record<string, string> = {
@@ -39,6 +40,7 @@ export default function TicketDetailPage() {
   const [selectedAgent, setSelectedAgent] = useState('')
   const [assignSuccess, setAssignSuccess] = useState(false)
   const [showReassign, setShowReassign] = useState(false)
+  const posthog = usePostHog()
 
   const { data: ticket, isLoading: ticketLoading, error: ticketError } = useQuery({
     queryKey: ['ticket', ticketId],
@@ -88,13 +90,22 @@ export default function TicketDetailPage() {
     mutationFn: (text: string) => ticketsApi.addComment(ticketId, { content: text }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['comments', ticketId] })
+      posthog.capture('comment_added', {
+        ticket_id: ticketId,
+        ticket_status: ticket?.status,
+      })
     },
   })
 
   const assignMutation = useMutation({
     mutationFn: (assigneeId: string) => adminApi.assignTicket(ticketId, assigneeId),
-    onSuccess: () => {
+    onSuccess: (_data, assigneeId) => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      posthog.capture('ticket_assigned', {
+        ticket_id: ticketId,
+        assigned_to_self: assigneeId === currentUser?.userId,
+        assigner_role: currentUser?.role,
+      })
       setAssignSuccess(true)
       setShowReassign(false)
       setTimeout(() => setAssignSuccess(false), 3000)
@@ -103,8 +114,13 @@ export default function TicketDetailPage() {
 
   const updateStatusMutation = useMutation({
     mutationFn: (status: string) => ticketsApi.updateStatus(ticketId, status),
-    onSuccess: () => {
+    onSuccess: (_data, newStatus) => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] })
+      posthog.capture('ticket_status_changed', {
+        ticket_id: ticketId,
+        previous_status: ticket?.status,
+        new_status: newStatus,
+      })
     },
   })
 
